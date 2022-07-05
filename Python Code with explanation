@@ -1,0 +1,126 @@
+Email Automation Code:
+
+
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import datetime, date, timedelta
+
+# we take input as schedule.txt (any text file having the class schedule)
+# link: https://drive.google.com/file/d/1m0Vuy-_2RIlMAdC9xPBqKAZ6Yev-xP7-/view?usp=sharing 
+
+file1 = open("schedule.txt", 'r')
+
+#making a list of each line of the txt file
+
+data = file1.readlines()
+
+# making a new list of list by splitting the data by using '-' seperator
+
+list_of_split = []
+
+for each in data:
+    list_of_split.append(each.split("-"))
+    
+# this list of list will be used to send the body of the mail mentioning class and date of class    
+
+# creating a new list of list with default space as the seperator, 
+# we just need first three items of the nested list here (which denotes the date)
+
+data_split_list = []
+
+for each in data:
+    data_split_list.append(each.split())
+print(data_split_list)
+
+# using for loop to append the list with just the first three elements 
+# which denotes the date in 2022 4 Jun (this format)
+
+list_of_dates = []
+
+for each in data_split_list:
+    list_of_dates.append(str(each[0]) + " " + str(each[1] + " " + str(each[2])))
+
+
+print(list_of_dates) 
+
+# we got the list of dates but these all are strings , 
+# so we need to convert them to real date objects and that too in the mentioned format.
+# we use strptime function and give the required formatting
+
+dates = []
+for each in list_of_dates:
+    try:
+        date = datetime.strptime(each, '%Y %d %b')
+        dates.append(date)
+    except ValueError:
+        continue
+        
+# now the list named dates will be having date objects corresponding to the given date, 
+# this we can compare with actual dates     
+
+file1.close()
+
+# getting today's date to do some comparisons
+
+today = date.today()
+
+#  Set up the MIME
+
+sender_address = 'rajatchauhan99@gmail.com'
+
+sender_pass = '********'
+
+receiver_address = 't19030@students.iitmandi.ac.in'
+
+
+message = MIMEMultipart()
+message['From'] = sender_address
+message['To'] = receiver_address
+message['Subject'] = 'OneLearn course series reminder'  # The subject line
+
+
+# using time delta to do some algebra with dates
+
+one_day = timedelta(days=1)
+
+# as the mail will be sent only from mon to friday so used two if statements
+
+if today.weekday() < 4:
+    for n in range(len(dates)):
+        if dates[n].date() == today.date() + one_day:
+            mail_content = "Hello,\nThis is a reminder mail for your class on " + str(list_of_split[n][1]) + " at " + str(list_of_split[n][0]) + "\nPlease join the class on time."
+            # The body and the attachments for the mail
+            message.attach(MIMEText(mail_content, 'plain'))
+            # Create SMTP session for sending the mail
+            session = smtplib.SMTP('smtp.gmail.com', 587)  # use gmail with port
+            session.starttls()  # enable security
+            session.login(sender_address, sender_pass)  # login with mail_id and password
+            text = message.as_string()
+            session.sendmail(sender_address, receiver_address, text)
+            session.quit()
+            print('Mail Sent')
+
+# if the weekday is friday we need to send the notification for next class on monday, so based on that if condition being used.
+
+
+if today.weekday() == 4:
+    for n in range(len(dates)):
+        if dates[n].date() == today.day() + 3*one_day:
+            mail_content = "Hello,/nThis is a reminder mail for your class on " + str(list_of_split[n][1]) + " at " + str(list_of_split[n][0]) + ". \nPlease join the class on time."
+            # The body and the attachments for the mail
+            message.attach(MIMEText(mail_content, 'plain'))
+            # Create SMTP session for sending the mail
+            session = smtplib.SMTP('smtp.gmail.com', 587)  # use gmail with port
+            session.starttls()  # enable security
+            session.login(sender_address, sender_pass)  # login with mail_id and password
+            text = message.as_string()
+            session.sendmail(sender_address, receiver_address, text)
+            session.quit()
+            print('Mail Sent')
+
+
+
+
+
